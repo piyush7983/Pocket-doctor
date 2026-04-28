@@ -18,7 +18,7 @@ createRoot(document.getElementById("root")!).render(
             toastOptions={{
               duration: 4000,
               style: {
-                borderRadius: "12px",
+                borderRadius: "13px",
                 padding: "12px 16px",
                 fontWeight: "500",
               },
