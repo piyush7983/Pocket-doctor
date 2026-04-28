@@ -39,11 +39,15 @@ public class AuthController {
     }
 
     /**
-     * Global exception handler for auth errors.
+     * Global and local Should be aimed Global exception handler for auth errors.
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleAuthError(RuntimeException ex) {
         return ResponseEntity.badRequest()
                 .body(Map.of("error", ex.getMessage()));
     }
+    //  public ResponseEntity<Map<String, String>> handleAuthError(RuntimeException ex) {
+    //     return ResponseEntity.badRequest()
+    //             .body(Map.of("error", ex.getMessage()));
+    // }
 }
