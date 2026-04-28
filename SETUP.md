@@ -6,7 +6,7 @@
 - **Java** 17+
 - **Maven** 3.8+
 - **MongoDB** 6+ (running locally or cloud instance)
-- (Optional) OpenAI API Key for real AI responses
+- (Optional) Gemini API Key for real AI responses
 - (Optional) Google Places API Key for real hospital data
 
 ---
@@ -52,7 +52,7 @@ Backend runs at: **http://localhost:8080**
 | Variable | Description | Default |
 |---|---|---|
 | `VITE_API_URL` | Backend API base URL | `http://localhost:8080/api` |
-| `VITE_OPENAI_API_KEY` | OpenAI API key (optional) | - |
+| `VITE_GEMINI_API_KEY` | Gemini API key (optional) | - |
 
 ### Backend (application.properties)
 | Property | Description | Default |
@@ -60,7 +60,9 @@ Backend runs at: **http://localhost:8080**
 | `server.port` | Server port | `8080` |
 | `spring.data.mongodb.uri` | MongoDB connection | `mongodb://localhost:27017/swasthya_sahayak` |
 | `app.jwt.secret` | JWT signing secret | Change this! |
-| `app.openai.api-key` | OpenAI API key | `DEMO_KEY` (uses mock) |
+| `app.gemini.api-key` | Gemini API key | `DEMO_KEY` (uses mock) |
+| `app.gemini.model` | Gemini model | `gemini-1.5-flash` |
+| `app.gemini.system-prompt` | Gemini system prompt | - |
 | `app.google.api-key` | Google Places API key | `DEMO_KEY` (uses mock) |
 
 ---

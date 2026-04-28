@@ -5,29 +5,40 @@ import com.swasthyasahayak.dto.ChatResponse;
 import com.swasthyasahayak.model.ChatMessage;
 import com.swasthyasahayak.model.ChatSession;
 import com.swasthyasahayak.repository.ChatSessionRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class ChatService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatService.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ChatSessionRepository sessionRepository;
 
-    @Value("${app.openai.api-key:DEMO_KEY}")
-    private String openAiApiKey;
+    @Value("${app.gemini.api-key:DEMO_KEY}")
+    private String geminiApiKey;
 
-    @Value("${app.openai.model:gpt-4.1-mini}")
-    private String openAiModel;
+    @Value("${app.gemini.model:gemini-1.5-flash}")
+    private String geminiModel;
 
-    @Value("${app.openai.system-prompt:}")
+    @Value("${app.gemini.system-prompt:}")
     private String systemPrompt;
 
     public ChatService(ChatSessionRepository sessionRepository) {
@@ -106,14 +117,14 @@ public class ChatService {
     }
 
     /**
-     * Generate AI response. Uses OpenAI API if configured, otherwise returns a mock response.
+     * Generate AI response. Uses Gemini API if configured, otherwise returns a mock response.
      */
     private String generateAIResponse(String userMessage, List<ChatMessage> history) {
-        // If API key is configured, call OpenAI
-        if (openAiApiKey != null && !openAiApiKey.isEmpty()
-                && !openAiApiKey.equals("DEMO_KEY")
-                && !openAiApiKey.startsWith("YOUR_")) {
-            return callOpenAI(userMessage, history);
+        // If API key is configured, call Gemini
+        if (geminiApiKey != null && !geminiApiKey.isEmpty()
+                && !geminiApiKey.equals("DEMO_KEY")
+                && !geminiApiKey.startsWith("YOUR_")) {
+            return callGemini(userMessage, history);
         }
 
         // Otherwise return mock response (for development/demo)
@@ -121,48 +132,73 @@ public class ChatService {
     }
 
     /**
-     * Call OpenAI API for real AI responses.
+     * Call Gemini API for real AI responses.
      */
-    private String callOpenAI(String userMessage, List<ChatMessage> history) {
+    private String callGemini(String userMessage, List<ChatMessage> history) {
         try {
-            // Build the conversation for context
-            StringBuilder conversationBuilder = new StringBuilder();
+            HttpClient client = HttpClient.newHttpClient();
+
+            List<Map<String, Object>> contents = new ArrayList<>();
             for (ChatMessage msg : history) {
-                String role = msg.getRole().equals("user") ? "User" : "Assistant";
-                conversationBuilder.append(role).append(": ").append(msg.getContent()).append("\n");
+                Map<String, Object> part = new LinkedHashMap<>();
+                part.put("text", msg.getContent());
+
+                Map<String, Object> content = new LinkedHashMap<>();
+                content.put("role", "user".equals(msg.getRole()) ? "user" : "model");
+                content.put("parts", List.of(part));
+                contents.add(content);
             }
 
-            // In a real implementation, use HttpClient or RestTemplate to call OpenAI
-            // Here's the structure you would use:
-            /*
-            var client = HttpClient.newHttpClient();
-            var requestBody = String.format("""
-                {
-                    "model": "%s",
-                    "messages": [
-                        {"role": "system", "content": "%s"},
-                        {"role": "user", "content": "%s"}
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 500
+            Map<String, Object> userPart = new LinkedHashMap<>();
+            userPart.put("text", userMessage);
+
+            Map<String, Object> userContent = new LinkedHashMap<>();
+            userContent.put("role", "user");
+            userContent.put("parts", List.of(userPart));
+            contents.add(userContent);
+
+            Map<String, Object> requestPayload = new HashMap<>();
+            requestPayload.put("contents", contents);
+
+            if (systemPrompt != null && !systemPrompt.isBlank()) {
+                Map<String, Object> systemInstruction = new HashMap<>();
+                systemInstruction.put("parts", List.of(Map.of("text", systemPrompt)));
+                requestPayload.put("systemInstruction", systemInstruction);
+            }
+
+            Map<String, Object> generationConfig = new HashMap<>();
+            generationConfig.put("temperature", 0.7);
+            generationConfig.put("maxOutputTokens", 500);
+            requestPayload.put("generationConfig", generationConfig);
+
+            String requestBody = objectMapper.writeValueAsString(requestPayload);
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models/"
+                            + geminiModel + ":generateContent?key=" + geminiApiKey))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode textNode = root.path("candidates")
+                        .path(0)
+                        .path("content")
+                        .path("parts")
+                        .path(0)
+                        .path("text");
+
+                if (!textNode.isMissingNode() && !textNode.isNull()) {
+                    return textNode.asText();
                 }
-                """, openAiModel, systemPrompt, userMessage);
+            }
 
-            var httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.openai.com/v1/chat/completions"))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + openAiApiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-            var response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            // Parse response JSON to extract the content...
-            */
-
-            log.info("OpenAI call would be made here for: {}", userMessage);
+            log.warn("Gemini API returned non-success status {}: {}", response.statusCode(), response.body());
             return generateMockResponse(userMessage);
         } catch (Exception e) {
-            log.error("Error calling OpenAI API", e);
+            log.error("Error calling Gemini API", e);
             return "I'm sorry, I'm having trouble connecting to my knowledge base right now. "
                     + "Please try again in a moment.\n\n"
                     + "⚠️ *This is not a medical diagnosis. Please consult a doctor.*";
