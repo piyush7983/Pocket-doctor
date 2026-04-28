@@ -141,7 +141,7 @@ swasthya-sahayak/
 | GET | `/api/history` | Yes | Get all chat sessions |
 | GET | `/api/history/{id}` | Yes | Get single session |
 | DELETE | `/api/history/{id}` | Yes | Delete session |
-| GET | `/api/nearby-hospitals?lat=&lng=` | Yes | Find nearby hospitals |
+| GET | `/api/nearby-hospitals?lat=&lng=` | Yes | FIND NEARBY HOSPITALS |
 
 ---
 
