@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a full chat conversation session for a user.
+ * Represents a full chat conversation 
  */
 @Document(collection = "chat_sessions")
 @Data
