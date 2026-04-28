@@ -16,11 +16,6 @@ public class HospitalController {
     public HospitalController(HospitalService hospitalService) {
         this.hospitalService = hospitalService;
     }
-
-    /**
-     * GET /api/nearby-hospitals?lat=...&lng=...
-     * Returns top 10 hospitals within ~20 km radius.
-     */
     @GetMapping("/nearby-hospitals")
     public ResponseEntity<List<HospitalResult>> getNearbyHospitals(
             @RequestParam double lat,
@@ -28,4 +23,11 @@ public class HospitalController {
         List<HospitalResult> hospitals = hospitalService.findNearbyHospitals(lat, lng);
         return ResponseEntity.ok(hospitals);
     }
+    //  @GetMapping("/nearby-hospitals")
+    // public ResponseEntity<List<HospitalResult>> getNearbyHospitals(
+    //         @RequestParam double lat,
+    //         @RequestParam double lng) {
+    //     List<HospitalResult> hospitals = hospitalService.findNearbyHospitals(lat, lng);
+    //     return ResponseEntity.ok(hospitals);
+    // }
 }
