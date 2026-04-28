@@ -44,9 +44,6 @@ public class ChatController {
         return ResponseEntity.ok(sessions);
     }
 
-    /**
-     * GET /api/history/{sessionId} — Get a single chat session.
-     */
     @GetMapping("/history/{sessionId}")
     public ResponseEntity<ChatSession> getSession(@PathVariable String sessionId) {
         ChatSession session = chatService.getSession(sessionId);
@@ -63,7 +60,7 @@ public class ChatController {
     }
 
     /**
-     * Global exception handler.
+     * Global exception handler. and create sum 
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleError(RuntimeException ex) {
