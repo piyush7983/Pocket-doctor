@@ -114,6 +114,8 @@ export interface Hospital {
   totalRatings: number;
   mapsUrl: string;
   phoneNumber?: string;
+  lat: number;
+  lng: number;
 }
 
 export async function getNearbyHospitals(
@@ -369,6 +371,8 @@ function mockHospitals(lat: number, lng: number): Hospital[] {
       totalRatings: h.ratings,
       mapsUrl: `https://www.google.com/maps/search/?api=1&query=${lat + latOffset},${lng + lngOffset}`,
       phoneNumber: `+91-11-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      lat: lat + latOffset,
+      lng: lng + lngOffset,
     };
   }).sort((a, b) => a.distance - b.distance);
 }

@@ -30,7 +30,9 @@ public class HospitalService {
             double rating,
             int totalRatings,
             String mapsUrl,
-            String phoneNumber
+            String phoneNumber,
+            double lat,
+            double lng
     ) {}
 
     /**
@@ -115,7 +117,9 @@ public class HospitalService {
                     Integer.parseInt(hospitalData[i][2]),
                     "https://www.google.com/maps/search/?api=1&query="
                             + (lat + latOffset) + "," + (lng + lngOffset),
-                    "+91-11-" + (10000000 + rand.nextInt(90000000))
+                    "+91-11-" + (10000000 + rand.nextInt(90000000)),
+                    lat + latOffset,
+                    lng + lngOffset
             ));
         }
 

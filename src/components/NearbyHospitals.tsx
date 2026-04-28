@@ -13,12 +13,23 @@ import {
   ChevronRight,
   RefreshCw,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix for Leaflet default marker icons not showing in Vite/Webpack
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 export default function NearbyHospitals() {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState("");
 
   const getUserLocation = (): Promise<GeolocationPosition> => {
@@ -166,6 +177,35 @@ export default function NearbyHospitals() {
                 <RefreshCw className="h-3.5 w-3.5" /> Refresh
               </button>
             </div>
+
+            {userLocation && (
+              <div className="h-64 w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 z-0 relative">
+                <MapContainer
+                  center={[userLocation.lat, userLocation.lng]}
+                  zoom={12}
+                  style={{ height: "100%", width: "100%", zIndex: 0 }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {/* User Location */}
+                  <Marker position={[userLocation.lat, userLocation.lng]}>
+                    <Popup>Your Location</Popup>
+                  </Marker>
+                  {/* Hospitals */}
+                  {hospitals.map((hospital, idx) => (
+                    <Marker key={hospital.placeId} position={[hospital.lat, hospital.lng]}>
+                      <Popup>
+                        <strong>{idx + 1}. {hospital.name}</strong><br />
+                        {hospital.address}<br />
+                        Distance: {hospital.distance} km
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            )}
 
             <div className="space-y-3">
               {hospitals.map((hospital, idx) => (
